@@ -12,8 +12,8 @@ pip install -r requirements.txt
 
 **Download embedding**
 
-the current code works with glove. glove.840B.300d.w2vformat.txt
-Download glove.840B.300d.zip and place it to /data/embeddings/
+the current code works with [GloVe](https://nlp.stanford.edu/projects/glove/)<br/>
+Download glove.840B.300d.zip and decompress it to /data/embeddings/
 
 
 **Run sample code**
