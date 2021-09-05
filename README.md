@@ -12,11 +12,11 @@ pip install -r requirements.txt
 
 **Download embedding**
 
-the current code works with [GloVe](https://nlp.stanford.edu/projects/glove/).<br/>
+This code works with [GloVe](https://nlp.stanford.edu/projects/glove/) word embeddings.<br/>
 Download glove.840B.300d.zip and decompress it to /data/embeddings/
 
 
 **Run sample code**
 
-move to exps/20190509_imdb_reviews
+Move to exps/20190509_imdb_reviews
 Run .ipynb from 1 to 5.
