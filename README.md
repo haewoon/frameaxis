@@ -5,7 +5,7 @@ https://peerj.com/articles/cs-644/
 
 <img src="https://github.com/haewoon/frameaxis/raw/main/semeval14.png">
 
-**Run
+**Run**
 
 ```
 poetry shell
