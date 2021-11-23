@@ -1,6 +1,16 @@
+[tool.poetry]
+name = "frameaxis"
+version = "0.1.0"
+description = ""
+authors = ["Kwak Haewoon <haewoon@acm.org>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+tensorflow= "^2.3.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+
 [build-system]
-requires = [
-    "setuptools>=42",
-    "wheel"
-]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

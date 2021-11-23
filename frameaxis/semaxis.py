@@ -4,7 +4,7 @@ import numpy as np
 from nltk.corpus import stopwords
 import math
 import operator
-from .core import CoreUtil
+from core import CoreUtil
 import logging
 
 
@@ -94,7 +94,7 @@ class SemAxis:
 
         return axis2score
 
-    def _prepare_matrix_computation(self, document, filter_stopword, min_freq):
+    def _prepare_matrix_computation(self, document, filter_stopword, min_freq, to_filter):
         vectorizer = CountVectorizer()
         transformed_data = vectorizer.fit_transform(document)
 
@@ -105,7 +105,7 @@ class SemAxis:
         for w_index, w in enumerate(vectorizer.get_feature_names()):
             if w in self.embedding.wv:
                 if frequencies[w_index] < min_freq or (filter_stopword 
-                    and (w in stopwords.words('english'))):
+                    and (w in stopwords.words('english'))) or w in to_filter:
                     continue
                 terms_filtered.append(self.embedding.wv[w])
                 frequencies_filtered.append(frequencies[w_index])
@@ -192,11 +192,13 @@ class SemAxis:
         return sorted(self.axes.keys()), mean, kurtosis
 
 
-    def compute_document_mean_with_tf(self, document, filter_stopword = True, min_freq = 10):
-        terms_filtered, frequencies_filtered, _ =  self._prepare_matrix_computation(document, filter_stopword, min_freq)  
+    def compute_document_mean_with_tf(self, document, filter_stopword = True, min_freq = 10, to_filter = set([])):
+        terms_filtered, frequencies_filtered, _ =  self._prepare_matrix_computation(document, filter_stopword, min_freq, to_filter)  
                
         # self.logger.debug(terms_filtered)
-        import tensorflow as tf        
+        import tensorflow.compat.v1 as tf
+        tf.disable_v2_behavior()
+
         tf.reset_default_graph()
         with tf.Session() as sess:
             self.axes_tfm_nn = tf.nn.l2_normalize(tf.constant(self.axes_mat), axis = 1)    
@@ -238,9 +240,11 @@ class SemAxis:
 
         return sorted(self.axes.keys()), kurtosis
 
-    def compute_document_second_moment_with_tf(self, document, corpus_mean, filter_stopword = True, min_freq = 10):
-        terms_filtered, frequencies_filtered, _ =  self._prepare_matrix_computation(document, filter_stopword, min_freq)  
-        import tensorflow as tf        
+    def compute_document_second_moment_with_tf(self, document, corpus_mean, filter_stopword = True, min_freq = 10, to_filter = set([])):
+        terms_filtered, frequencies_filtered, _ =  self._prepare_matrix_computation(document, filter_stopword, min_freq, to_filter)  
+        import tensorflow.compat.v1 as tf
+        tf.disable_v2_behavior()
+
         tf.reset_default_graph()
         with tf.Session() as sess:
             self.axes_tfm_nn = tf.nn.l2_normalize(tf.constant(self.axes_mat), axis = 1)    
@@ -269,10 +273,11 @@ class SemAxis:
         return moment2
     
 
-    def word_contribution(self, document, axis, filter_stopword = True, min_freq = 10):
-        terms_filtered, frequencies_filtered, words =  self._prepare_matrix_computation(document, filter_stopword, min_freq)  
-        axis_mat = np.array([self.axes[axis]])
-        import tensorflow as tf        
+    def word_contribution(self, document, axis, filter_stopword = True, min_freq = 10, to_filter = set([])):
+        terms_filtered, frequencies_filtered, words =  self._prepare_matrix_computation(document, filter_stopword, min_freq, to_filter)  
+        axis_mat = np.array([CoreUtil.map_axis_to_vec(self.embedding, axis)])
+        import tensorflow.compat.v1 as tf
+        tf.disable_v2_behavior()
         tf.reset_default_graph()
         with tf.Session() as sess:
             axis_tfm_nn = tf.nn.l2_normalize(tf.constant(axis_mat), axis = 1)
@@ -311,10 +316,11 @@ class SemAxis:
 
 
 
-    def word_contribution_to_second_moment(self, document, axis, corpus_mean, filter_stopword = True, min_freq = 10):
-        terms_filtered, frequencies_filtered, words =  self._prepare_matrix_computation(document, filter_stopword, min_freq)  
+    def word_contribution_to_second_moment(self, document, axis, corpus_mean, filter_stopword = True, min_freq = 10, to_filter = set([])):
+        terms_filtered, frequencies_filtered, words =  self._prepare_matrix_computation(document, filter_stopword, min_freq, to_filter)  
         axis_mat = np.array([self.axes[axis]])
-        import tensorflow as tf        
+        import tensorflow.compat.v1 as tf
+        tf.disable_v2_behavior()
         tf.reset_default_graph()
         with tf.Session() as sess:
             axis_tfm_nn = tf.nn.l2_normalize(tf.constant(axis_mat), axis = 1)
