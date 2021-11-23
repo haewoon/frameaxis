@@ -5,18 +5,21 @@ https://peerj.com/articles/cs-644/
 
 <img src="https://github.com/haewoon/frameaxis/raw/main/semeval14.png">
 
-**Required libraries**
+**Run
 
-pip install -r requirements.txt
+```
+poetry shell
+poetry install
+```
 
 
 **Download embedding**
 
-This code works with [GloVe](https://nlp.stanford.edu/projects/glove/) word embeddings.<br/>
+The example code works with [GloVe](https://nlp.stanford.edu/projects/glove/) word embeddings.<br/>
 Download glove.840B.300d.zip and decompress it to /data/embeddings/
 
 
 **Run sample code**
 
-Move to exps/20190509_imdb_reviews
-Run .ipynb from 1 to 5.
+Move to examples/
+Run notebooks from 1_ to 4_.
