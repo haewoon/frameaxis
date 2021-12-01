@@ -374,3 +374,17 @@ class SemAxis:
                              adjoint_b = True # transpose second matrix
                              )
             self.contributions = contributions_nn.eval()
+    
+    def compute_document_mean_from_contribution_mat(self, doc_idx):
+        import tensorflow as tf        
+        tf.reset_default_graph()
+        with tf.Session() as sess:
+            vectorized_docs_nn = tf.constant(self.doc_freqs, dtype=np.float32)
+            doc_freqs_nn = tf.expand_dims(vectorized_docs_nn[doc_idx,:], axis=1)
+
+            contributions_nn = tf.constant(self.contributions, dtype=np.float32)
+            # ws: freq * contribution
+            ws = tf.matmul(contributions_nn, doc_freqs_nn)
+            mean = tf.reduce_sum(ws, 1)/tf.reduce_sum(doc_freqs_nn)
+            mean = sess.run(mean)
+        return mean
