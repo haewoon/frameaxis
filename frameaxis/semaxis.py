@@ -363,7 +363,7 @@ class SemAxis:
     def _precompute_word_contribution_mat(self, documents, filter_stopword = True, min_freq = 10):
         # get filtered terms and frequencies for all docs. Terms are filtered out if they
         # appear less than min_freq times ACROSS ALL DOCS
-        self.terms_filtered, self.doc_freqs =  self._bao_prepare_matrix_computation(documents, filter_stopword, min_freq)  
+        self.terms_filtered, self.doc_freqs =  self._prepare_contribution_mat_and_tf(documents, filter_stopword, min_freq)  
                
         import tensorflow as tf        
         tf.reset_default_graph()
