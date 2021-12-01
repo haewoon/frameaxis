@@ -313,9 +313,6 @@ class SemAxis:
             contrib = sess.run([contrib])
         return contrib, words        
 
-
-
-
     def word_contribution_to_second_moment(self, document, axis, corpus_mean, filter_stopword = True, min_freq = 10, to_filter = set([])):
         terms_filtered, frequencies_filtered, words =  self._prepare_matrix_computation(document, filter_stopword, min_freq, to_filter)  
         axis_mat = np.array([self.axes[axis]])
@@ -344,3 +341,36 @@ class SemAxis:
             # kurtosis = moment4 / tf.square(moment2) - 3    
             contrib = sess.run([contrib])
         return contrib, words     
+
+    def _prepare_contribution_mat_and_tf(self, documents, filter_stopword, min_freq):
+            vectorizer = CountVectorizer()
+            transformed_data = vectorizer.fit_transform(documents).toarray() #return dense matrix
+            frequencies = np.ravel(transformed_data.sum(axis=0))
+            
+            less_freq_idx = np.where(frequencies < min_freq)[0]
+            no_emb_idx = [idx for w, idx in vectorizer.vocabulary_.items() if w not in self.embedding.wv]
+            stopwords_idx = [idx for w, idx in vectorizer.vocabulary_.items() if filter_stopword and (w in stopwords.words('english'))]
+            to_filter_out = list(less_freq_idx) + no_emb_idx + stopwords_idx
+            freq_filtered = np.delete(transformed_data, to_filter_out, axis=1) # delete terms appearing less than min_freq
+            
+            self.doc_idx_to_filter = np.where(np.sum(freq_filtered,axis=1)<1)[0] # delete docs where all terms appear less than min_freq
+            terms_filtered = [self.embedding.wv[w] for w, idx in vectorizer.vocabulary_.items() if idx not in to_filter_out]
+            if self.axes_tfm_nn is None:
+                self.axes_mat = np.array([self.axes[k] for k in sorted(self.axes)])
+
+            return terms_filtered, freq_filtered
+
+    def _precompute_word_contribution_mat(self, documents, filter_stopword = True, min_freq = 10):
+        # get filtered terms and frequencies for all docs. Terms are filtered out if they
+        # appear less than min_freq times ACROSS ALL DOCS
+        self.terms_filtered, self.doc_freqs =  self._bao_prepare_matrix_computation(documents, filter_stopword, min_freq)  
+               
+        import tensorflow as tf        
+        tf.reset_default_graph()
+        with tf.Session() as sess:
+            self.axes_tfm_nn = tf.nn.l2_normalize(tf.constant(self.axes_mat), axis = 1)
+            term_filtered_tfm_nn = tf.nn.l2_normalize(tf.constant(np.array(self.terms_filtered)), axis = 1)
+            contributions_nn = tf.matmul(self.axes_tfm_nn, term_filtered_tfm_nn,
+                             adjoint_b = True # transpose second matrix
+                             )
+            self.contributions = contributions_nn.eval()
