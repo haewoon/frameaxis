@@ -17,7 +17,7 @@ class SemAxis:
         self.logger = logging.getLogger(__name__)                
         self.embedding = embedding
         self.axes = self._build_axes_on_embedding(axes_str)
-        self.axes_tfm_nn = None
+        self.axes_mat = None
 
     
     def _build_axes_on_embedding(self, axes_str):
@@ -111,7 +111,7 @@ class SemAxis:
                 frequencies_filtered.append(frequencies[w_index])
                 words.append(w)
 
-        if self.axes_tfm_nn is None:
+        if self.axes_mat is None:
             self.axes_mat = np.array([self.axes[k] for k in sorted(self.axes)])
 
         return terms_filtered, frequencies_filtered, words
@@ -121,11 +121,11 @@ class SemAxis:
         import tensorflow as tf        
         tf.reset_default_graph()
         with tf.Session() as sess:
-            self.axes_tfm_nn = tf.nn.l2_normalize(tf.constant(self.axes_mat), axis = 1)    
+            axes_tfm_nn = tf.nn.l2_normalize(tf.constant(self.axes_mat), axis = 1)    
             frequencies_vec = tf.constant(frequencies_filtered, dtype=np.float32)
             term_filtered_tfm_nn = tf.nn.l2_normalize(tf.constant(np.array(terms_filtered)), axis = 1)
 
-            result = tf.matmul(self.axes_tfm_nn, term_filtered_tfm_nn,
+            result = tf.matmul(axes_tfm_nn, term_filtered_tfm_nn,
                              adjoint_b = True # transpose second matrix
                              )
             ws = tf.multiply(result, frequencies_vec)
@@ -169,11 +169,11 @@ class SemAxis:
         import tensorflow as tf        
         tf.reset_default_graph()
         with tf.Session() as sess:
-            self.axes_tfm_nn = tf.nn.l2_normalize(tf.constant(self.axes_mat), axis = 1)    
+            axes_tfm_nn = tf.nn.l2_normalize(tf.constant(self.axes_mat), axis = 1)    
             frequencies_vec = tf.constant(frequencies_filtered, dtype=np.float32)
             term_filtered_tfm_nn = tf.nn.l2_normalize(tf.constant(np.array(terms_filtered)), axis = 1)
 
-            test = tf.matmul(self.axes_tfm_nn, term_filtered_tfm_nn,
+            test = tf.matmul(axes_tfm_nn, term_filtered_tfm_nn,
                              adjoint_b = True # transpose second matrix
                              )
             result, masked_frequencies_tsr = self._apply_mask(test, frequencies_vec, mask_percent)
@@ -201,11 +201,11 @@ class SemAxis:
 
         tf.reset_default_graph()
         with tf.Session() as sess:
-            self.axes_tfm_nn = tf.nn.l2_normalize(tf.constant(self.axes_mat), axis = 1)    
+            axes_tfm_nn = tf.nn.l2_normalize(tf.constant(self.axes_mat), axis = 1)    
             frequencies_vec = tf.constant(frequencies_filtered, dtype=np.float32)
             term_filtered_tfm_nn = tf.nn.l2_normalize(tf.constant(np.array(terms_filtered)), axis = 1)
 
-            result = tf.matmul(self.axes_tfm_nn, term_filtered_tfm_nn,
+            result = tf.matmul(axes_tfm_nn, term_filtered_tfm_nn,
                              adjoint_b = True # transpose second matrix
                              )
             ws = tf.multiply(result, frequencies_vec)
@@ -219,11 +219,11 @@ class SemAxis:
         import tensorflow as tf        
         tf.reset_default_graph()
         with tf.Session() as sess:
-            self.axes_tfm_nn = tf.nn.l2_normalize(tf.constant(self.axes_mat), axis = 1)    
+            axes_tfm_nn = tf.nn.l2_normalize(tf.constant(self.axes_mat), axis = 1)    
             frequencies_vec = tf.constant(frequencies_filtered, dtype=np.float32)
             term_filtered_tfm_nn = tf.nn.l2_normalize(tf.constant(np.array(terms_filtered)), axis = 1)
 
-            result = tf.matmul(self.axes_tfm_nn, term_filtered_tfm_nn,
+            result = tf.matmul(axes_tfm_nn, term_filtered_tfm_nn,
                              adjoint_b = True # transpose second matrix
                              )
             ws = tf.multiply(result, frequencies_vec)
@@ -247,11 +247,11 @@ class SemAxis:
 
         tf.reset_default_graph()
         with tf.Session() as sess:
-            self.axes_tfm_nn = tf.nn.l2_normalize(tf.constant(self.axes_mat), axis = 1)    
+            axes_tfm_nn = tf.nn.l2_normalize(tf.constant(self.axes_mat), axis = 1)    
             frequencies_vec = tf.constant(frequencies_filtered, dtype=np.float32)
             term_filtered_tfm_nn = tf.nn.l2_normalize(tf.constant(np.array(terms_filtered)), axis = 1)
 
-            result = tf.matmul(self.axes_tfm_nn, term_filtered_tfm_nn,
+            result = tf.matmul(axes_tfm_nn, term_filtered_tfm_nn,
                              adjoint_b = True # transpose second matrix
                              )
             ws = tf.multiply(result, frequencies_vec)
@@ -355,7 +355,7 @@ class SemAxis:
             
             self.doc_idx_to_filter = np.where(np.sum(freq_filtered,axis=1)<1)[0] # delete docs where all terms appear less than min_freq
             terms_filtered = [self.embedding.wv[w] for w, idx in vectorizer.vocabulary_.items() if idx not in to_filter_out]
-            if self.axes_tfm_nn is None:
+            if self.axes_mat is None:
                 self.axes_mat = np.array([self.axes[k] for k in sorted(self.axes)])
 
             return terms_filtered, freq_filtered
@@ -368,9 +368,9 @@ class SemAxis:
         import tensorflow as tf        
         tf.reset_default_graph()
         with tf.Session() as sess:
-            self.axes_tfm_nn = tf.nn.l2_normalize(tf.constant(self.axes_mat), axis = 1)
+            axes_tfm_nn = tf.nn.l2_normalize(tf.constant(self.axes_mat), axis = 1)
             term_filtered_tfm_nn = tf.nn.l2_normalize(tf.constant(np.array(self.terms_filtered)), axis = 1)
-            contributions_nn = tf.matmul(self.axes_tfm_nn, term_filtered_tfm_nn,
+            contributions_nn = tf.matmul(axes_tfm_nn, term_filtered_tfm_nn,
                              adjoint_b = True # transpose second matrix
                              )
             self.contributions = contributions_nn.eval()
