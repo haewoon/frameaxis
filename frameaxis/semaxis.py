@@ -395,14 +395,13 @@ class SemAxis:
         with tf.Session() as sess:
             vectorized_doc = self.doc_freqs[doc_idx,:]
             doc_freqs_vec = tf.reshape(tf.constant(vectorized_doc, dtype=np.float32), [-1,1])
-            ones_vectorized_doc = tf.constant(np.where(vectorized_doc!=0, 1, 0), dtype=np.float32)
             contributions_nn = tf.constant(self.contributions, dtype=np.float32)
 
             mean = tf.constant(corpus_mean, dtype=np.float32)
-            contrib_vec = tf.matmul(contributions_nn, ones_vectorized_doc)
-            diff = contrib_vec-tf.reshape(mean, [-1,1])
+            diff_nn = contributions_nn-tf.reshape(mean, [-1,1]) #1621,339
+            diff_numerator = tf.matmul(diff_nn, doc_freqs_vec)
             # moment4 = tf.reduce_sum(tf.multiply(tf.pow(diff, 4), frequencies_vec), 1)/tf.reduce_sum(frequencies_vec)
-            moment2 = tf.reduce_sum(tf.multiply(tf.pow(diff, 2), doc_freqs_vec), 1)/tf.reduce_sum(doc_freqs_vec)
+            moment2 = tf.reduce_sum(tf.pow(diff_numerator,2), 1)/tf.reduce_sum(doc_freqs_vec)
             # kurtosis = moment4 / tf.square(moment2) - 3    
             moment2 = sess.run(moment2)
 
