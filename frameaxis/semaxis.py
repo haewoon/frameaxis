@@ -354,7 +354,8 @@ class SemAxis:
             freq_filtered = np.delete(transformed_data, to_filter_out, axis=1) # delete terms appearing less than min_freq
             
             self.doc_idx_to_filter = np.where(np.sum(freq_filtered,axis=1)<1)[0] # delete docs where all terms appear less than min_freq
-            terms_filtered = [self.embedding.wv[w] for w, idx in vectorizer.vocabulary_.items() if idx not in to_filter_out]
+            # vocabulary_ iterates in first-seen order; sort by column index so rows match freq_filtered columns
+            terms_filtered = [self.embedding.wv[w] for w, idx in sorted(vectorizer.vocabulary_.items(), key=lambda x: x[1]) if idx not in to_filter_out]
             if self.axes_mat is None:
                 self.axes_mat = np.array([self.axes[k] for k in sorted(self.axes)])
 
