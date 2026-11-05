@@ -44,7 +44,7 @@ description = "Disable App Nap on macOS >= 10.9"
 optional = false
 python-versions = ">=3.6"
 groups = ["examples"]
-markers = "(platform_system == \"Darwin\" or sys_platform == \"darwin\") and python_version == \"3.8\""
+markers = "python_version == \"3.8\" and (platform_system == \"Darwin\" or sys_platform == \"darwin\")"
 files = [
     {file = "appnope-0.1.4-py2.py3-none-any.whl", hash = "sha256:502575ee11cd7a28c0205f379b525beefebab9d161b7c964670864014ed7213c"},
     {file = "appnope-0.1.4.tar.gz", hash = "sha256:1de3860566df9caf38f01f86f65e0e13e379af54f9e4bee1e66b48f2efffd1ee"},
@@ -2218,18 +2218,15 @@ test = ["flake8", "matplotlib", "nbdime", "nbval", "notebook", "pytest"]
 
 [[package]]
 name = "mistune"
-version = "3.3.4"
-description = "A sane and fast Markdown parser with useful plugins and renderers"
+version = "2.1.0"
+description = "A sane Markdown parser with useful plugins and renderers"
 optional = false
-python-versions = ">=3.8"
+python-versions = "*"
 groups = ["examples"]
 files = [
-    {file = "mistune-3.3.4-py3-none-any.whl", hash = "sha256:ee015381e955e370962968befe1d729ab60fafb6a715ac6751763fbce38c8d4a"},
-    {file = "mistune-3.3.4.tar.gz", hash = "sha256:58b5c96d6fcb61190dfe5fae498d2b2065f99cf61e9649418fd54cf1ada86dfe"},
+    {file = "mistune-2.1.0-py2.py3-none-any.whl", hash = "sha256:8208c43d6771da99f8195ac4499ec1373202d3726564c93092302fc3ac92dc38"},
+    {file = "mistune-2.1.0.tar.gz", hash = "sha256:863bba1745fed5a05dbf3ada970d7a01f852bb0e1b0d9fcf6065ed794def1b73"},
 ]
-
-[package.dependencies]
-typing-extensions = {version = "*", markers = "python_version < \"3.11\""}
 
 [[package]]
 name = "more-itertools"
@@ -3287,7 +3284,7 @@ description = "C parser in Python"
 optional = false
 python-versions = ">=3.8"
 groups = ["examples"]
-markers = "python_version == \"3.9\" and implementation_name != \"PyPy\" or python_version == \"3.8\""
+markers = "python_version == \"3.8\" or implementation_name != \"PyPy\""
 files = [
     {file = "pycparser-2.23-py3-none-any.whl", hash = "sha256:e5c6e8d3fbad53479cab09ac03729e0a9faf2bee3db8208a550daf5af81a5934"},
     {file = "pycparser-2.23.tar.gz", hash = "sha256:78816d4f24add8f10a06d6f05b4d424ad9e96cfebf68a4ddc99c65c0720d00c2"},
@@ -3461,7 +3458,7 @@ description = "Python for Window Extensions"
 optional = false
 python-versions = "*"
 groups = ["examples"]
-markers = "sys_platform == \"win32\" and platform_python_implementation != \"PyPy\" and python_version == \"3.8\""
+markers = "python_version == \"3.8\" and sys_platform == \"win32\" and platform_python_implementation != \"PyPy\""
 files = [
     {file = "pywin32-311-cp310-cp310-win32.whl", hash = "sha256:d03ff496d2a0cd4a5893504789d4a15399133fe82517455e78bad62efbb7f0a3"},
     {file = "pywin32-311-cp310-cp310-win_amd64.whl", hash = "sha256:797c2772017851984b97180b0bebe4b620bb86328e8a884bb626156295a63b3b"},
@@ -3492,7 +3489,7 @@ description = "Python for Windows Extensions"
 optional = false
 python-versions = ">=3.9"
 groups = ["examples"]
-markers = "sys_platform == \"win32\" and platform_python_implementation != \"PyPy\" and python_version == \"3.9\""
+markers = "python_version == \"3.9\" and sys_platform == \"win32\" and platform_python_implementation != \"PyPy\""
 files = [
     {file = "pywin32-312-cp310-cp310-win32.whl", hash = "sha256:772235332b5d1024c696f11cea1ae4be7930f0a8b894bb43db14e3f435f1ff7e"},
     {file = "pywin32-312-cp310-cp310-win_amd64.whl", hash = "sha256:5dbc35d2b5320dc07f25fa31269cfb767471002b17de5eb067d03da68c7cb2db"},
@@ -5023,4 +5020,4 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=4.6)", "pytest-black (
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.8,<3.10"
-content-hash = "22938d990ed028cb9b7d7e4b422c01c315bb12bab4e2adfe5b4d0740b4874b84"
+content-hash = "25979c730e40df119af5ea63dcb7b9e3a0bd6a7e22d2ed63fe2715eab27e358a"

@@ -23,6 +23,8 @@ optional = true
 pandas = "*"
 matplotlib = "*"
 notebook = "*"
+# TensorFlow 2.6 pins typing-extensions 3.7, which lacks what mistune 3 (via nbconvert) imports
+mistune = "<3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
