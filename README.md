@@ -7,10 +7,10 @@ https://peerj.com/articles/cs-644/
 
 **Install**
 
-Requires Python 3.9 (the locked TensorFlow 2.6.2 and NumPy 1.19.5 only ship wheels up to 3.9; 3.8 is allowed but not tested in CI, since current Poetry can no longer create 3.8 environments) and [Poetry](https://python-poetry.org/).
+Requires Python 3.11 to 3.13 (CI tests both; gensim has no wheels for 3.14 yet) and [Poetry](https://python-poetry.org/). Everything runs in NumPy; TensorFlow is no longer needed, and the `*_with_tf` method names are kept only for compatibility.
 
 ```
-poetry env use python3.9
+poetry env use python3.11
 poetry install --with examples,dev
 poetry run python -c "import nltk; nltk.download('stopwords')"
 ```
@@ -58,6 +58,6 @@ Results produced before this change chose the tail from the sign of the score, u
 
 **Precomputed contribution matrix**
 
-For large corpora, `_precompute_word_contribution_mat(documents)` scores every term on every axis once, and `compute_document_mean_from_contribution_mat(i)` / `compute_document_second_moment_from_contribution_mat(i, corpus_mean)` then work per document. Its `min_freq` drops terms rare across the whole corpus; to match the per-document methods (`compute_document_mean_with_tf` and friends) precompute with `min_freq=1` and pass `min_freq` and `to_filter` to the per-document calls. It runs in NumPy and no longer needs TensorFlow.
+For large corpora, `_precompute_word_contribution_mat(documents)` scores every term on every axis once, and `compute_document_mean_from_contribution_mat(i)` / `compute_document_second_moment_from_contribution_mat(i, corpus_mean)` then work per document. Its `min_freq` drops terms rare across the whole corpus; to match the per-document methods (`compute_document_mean_with_tf` and friends) precompute with `min_freq=1` and pass `min_freq` and `to_filter` to the per-document calls.
 
 Results computed with this path between its introduction (Dec 2021) and the fixes in #10 and #11 (Nov 2026) are wrong: rows of the contribution matrix were misaligned with the term-frequency columns, and the second moment was not a second moment. Please rerun them.
