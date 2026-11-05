@@ -126,7 +126,7 @@ Other code paths (the precomputed contribution matrix, a faster pipeline) should
 
 - Data: `examples/restaurant.tsv` (SemEval-2014 restaurant sentences with aspect and sentiment), sha256 `{data_sha}`
 - Embedding: GloVe 840B, 300d (https://nlp.stanford.edu/projects/glove/), converted to word2vec text format with
-  `gensim.scripts.glove2word2vec`
+  `gensim.scripts.glove2word2vec` and the header set to `2196016 300` (see 'Download embedding' in the README)
   - `glove.840B.300d.w2vformat.txt` sha256 `{emb_sha}`
   - `glove.840B.300d.zip` sha256 `{zip_sha}`
 - Axes: WordNet adjective antonyms (`frameaxis/axes/wordnet_antonyms.tsv`, 1,828 pairs); {n_axes} are present in the embedding.
@@ -157,14 +157,15 @@ intensity `{sha_sm}`.
 
 ## Environment
 
-Python {py}; {versions}
+Python {py} on {os_arch}; {versions}
 """.format(commit=commit, data_sha=sha256(os.path.join(EXAMPLES, "restaurant.tsv")), emb_sha=sha256(EMBEDDING),
            zip_sha=sha256(zip_path) if os.path.exists(zip_path) else "(zip not present when generated)",
            n_axes="{:,}".format(rows["average"][2]), rows_avg="{:,}".format(rows["average"][1]),
            rows_sm="{:,}".format(rows["second_moment"][1]), N=notebook_param("2_Bootstrapping.ipynb", "N"),
            SEED=notebook_param("2_Bootstrapping.ipynb", "SEED"), ALPHA=ALPHA,
            sha_avg=rows["average"][3], sha_sm=rows["second_moment"][3],
-           py=platform.python_version(), versions=", ".join(versions))
+           py=platform.python_version(), os_arch="{} {}".format(platform.system(), platform.machine()),
+           versions=", ".join(versions))
     open(os.path.join(OUT, "README.md"), "w").write(text)
 
 
