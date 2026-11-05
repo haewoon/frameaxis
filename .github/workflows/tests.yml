@@ -1,0 +1,26 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          # Only 3.9: current Poetry can no longer create Python 3.8 environments.
+          python-version: "3.9"
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Install dependencies
+        run: |
+          poetry env use "$(which python)"
+          poetry install --with dev
+          poetry run python -c "import nltk; nltk.download('stopwords')"
+      - name: Run tests
+        working-directory: tests
+        run: poetry run pytest -q

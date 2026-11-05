@@ -1,15 +1,35 @@
 [tool.poetry]
 name = "frameaxis"
 version = "0.1.0"
-description = ""
+description = "FrameAxis: characterizing microframe bias and intensity with word embedding"
 authors = ["Kwak Haewoon <haewoon@acm.org>"]
+readme = "README.md"
+packages = [{ include = "frameaxis" }]
 
 [tool.poetry.dependencies]
-python = "^3.8"
-tensorflow= "^2.3.1"
+# TensorFlow 2.6.2 and NumPy 1.19.5 in poetry.lock only ship wheels for Python 3.6-3.9.
+python = ">=3.8,<3.10"
+tensorflow = "^2.3.1"
+numpy = "*"
+scipy = "*"
+scikit-learn = "*"
+gensim = "*"
+nltk = "*"
 
-[tool.poetry.dev-dependencies]
-pytest = "^5.2"
+[tool.poetry.group.examples]
+optional = true
+
+[tool.poetry.group.examples.dependencies]
+pandas = "*"
+matplotlib = "*"
+notebook = "*"
+# TensorFlow 2.6 pins typing-extensions 3.7, which lacks what mistune 3 (via nbconvert) imports
+mistune = "<3"
+# matplotlib is capped at 3.6 by NumPy 1.19; matplotlib-inline 0.2 needs matplotlib 3.7+
+matplotlib-inline = "<0.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "*"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

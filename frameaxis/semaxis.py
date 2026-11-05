@@ -4,7 +4,10 @@ import numpy as np
 from nltk.corpus import stopwords
 import math
 import operator
-from core import CoreUtil
+try:
+    from .core import CoreUtil
+except ImportError:  # notebooks put frameaxis/ itself on sys.path
+    from core import CoreUtil
 import logging
 
 
@@ -15,7 +18,7 @@ class SemAxis:
                             datefmt='%m-%d %H:%M',
                             filemode="w")
         self.logger = logging.getLogger(__name__)                
-        self.embedding = embedding
+        self.embedding = getattr(embedding, "wv", embedding)  # KeyedVectors or a Word2Vec model
         self.axes = self._build_axes_on_embedding(axes_str)
         self.axes_mat = None
 
@@ -35,7 +38,7 @@ class SemAxis:
 
     def compute_word_score(self, w):
         results = {}
-        w_vec = self.embedding.wv[w]
+        w_vec = self.embedding[w]
         for axis_name in self.axes:
             results[axis_name] = CoreUtil.get_score(w_vec, self.axes[axis_name])
         return results
@@ -43,7 +46,7 @@ class SemAxis:
     def _compute_with_document(self, document, filter_stopword = True, min_freq = 10, power=1):
         vectorizer = CountVectorizer()
         transformed_data = vectorizer.fit_transform(document)
-        tf = zip(vectorizer.get_feature_names(), np.ravel(transformed_data.sum(axis=0)))
+        tf = zip(vectorizer.get_feature_names_out(), np.ravel(transformed_data.sum(axis=0)))
 
         axis2score = defaultdict(float)
         word_count = 0
@@ -54,7 +57,7 @@ class SemAxis:
                 continue
 
             try:
-                w_vec = self.embedding.wv[term]
+                w_vec = self.embedding[term]
             except:
                 continue
 
@@ -74,7 +77,7 @@ class SemAxis:
     def compute_document_raw(self, document, filter_stopword = True, min_freq = 10):
         vectorizer = CountVectorizer()
         transformed_data = vectorizer.fit_transform(document)
-        tf = zip(vectorizer.get_feature_names(), np.ravel(transformed_data.sum(axis=0)))
+        tf = zip(vectorizer.get_feature_names_out(), np.ravel(transformed_data.sum(axis=0)))
 
         axis2score = defaultdict(lambda: defaultdict(int))
         for (term, frequency) in tf:
@@ -84,7 +87,7 @@ class SemAxis:
                 continue
 
             try:
-                w_vec = self.embedding.wv[term]
+                w_vec = self.embedding[term]
             except:
                 continue
 
@@ -102,12 +105,12 @@ class SemAxis:
         frequencies_filtered = []
         words = []
         frequencies = np.ravel(transformed_data.sum(axis=0))
-        for w_index, w in enumerate(vectorizer.get_feature_names()):
-            if w in self.embedding.wv:
+        for w_index, w in enumerate(vectorizer.get_feature_names_out()):
+            if w in self.embedding:
                 if frequencies[w_index] < min_freq or (filter_stopword 
                     and (w in stopwords.words('english'))) or w in to_filter:
                     continue
-                terms_filtered.append(self.embedding.wv[w])
+                terms_filtered.append(self.embedding[w])
                 frequencies_filtered.append(frequencies[w_index])
                 words.append(w)
 
@@ -348,14 +351,14 @@ class SemAxis:
             frequencies = np.ravel(transformed_data.sum(axis=0))
             
             less_freq_idx = np.where(frequencies < min_freq)[0]
-            no_emb_idx = [idx for w, idx in vectorizer.vocabulary_.items() if w not in self.embedding.wv]
+            no_emb_idx = [idx for w, idx in vectorizer.vocabulary_.items() if w not in self.embedding]
             stopwords_idx = [idx for w, idx in vectorizer.vocabulary_.items() if filter_stopword and (w in stopwords.words('english'))]
             to_filter_out = list(less_freq_idx) + no_emb_idx + stopwords_idx
             freq_filtered = np.delete(transformed_data, to_filter_out, axis=1) # delete terms appearing less than min_freq
             
             self.doc_idx_to_filter = np.where(np.sum(freq_filtered,axis=1)<1)[0] # delete docs where all terms appear less than min_freq
             # vocabulary_ iterates in first-seen order; sort by column index so rows match freq_filtered columns
-            terms_filtered = [self.embedding.wv[w] for w, idx in sorted(vectorizer.vocabulary_.items(), key=lambda x: x[1]) if idx not in to_filter_out]
+            terms_filtered = [self.embedding[w] for w, idx in sorted(vectorizer.vocabulary_.items(), key=lambda x: x[1]) if idx not in to_filter_out]
             if self.axes_mat is None:
                 self.axes_mat = np.array([self.axes[k] for k in sorted(self.axes)])
 
