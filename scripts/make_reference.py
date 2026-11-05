@@ -5,10 +5,10 @@ tables into reference/semeval14/ and writes a README with every parameter
 needed to reproduce them, plus CHANGES.md comparing the corrected test with
 the 2021 rule.
 
-Usage (from the repository root, after `poetry install --with examples,dev`
-and the GloVe download described in the README):
+Usage (from the repository root, with the `examples` extra installed and the
+GloVe download described in the README):
 
-    poetry run python scripts/make_reference.py
+    python scripts/make_reference.py
 
 Takes roughly 10-20 minutes, most of it loading GloVe and the 10,000-sample
 null in notebook 2. Pass --skip-run to rebuild reference/ from existing

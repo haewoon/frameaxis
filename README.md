@@ -7,21 +7,32 @@ https://peerj.com/articles/cs-644/
 
 **Install**
 
-Requires Python 3.11 to 3.13 (CI tests both; gensim has no wheels for 3.14 yet) and [Poetry](https://python-poetry.org/). Everything runs in NumPy; TensorFlow is no longer needed, and the `*_with_tf` method names are kept only for compatibility.
+Requires Python 3.11 to 3.13 (CI tests both; gensim has no wheels for 3.14 yet). Everything runs in NumPy; TensorFlow is no longer needed, and the `*_with_tf` method names are kept only for compatibility.
+
+With pip, which installs the latest versions of the dependencies:
 
 ```
-poetry env use python3.11
-poetry install --with examples,dev
-poetry run python -c "import nltk; nltk.download('stopwords')"
+python3.11 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[examples,dev]"
+python -c "import nltk; nltk.download('stopwords')"
 ```
 
-Then prefix commands with `poetry run`, or activate the environment with `eval $(poetry env activate)`.
+Or with [uv](https://docs.astral.sh/uv/), which installs the exact versions in `uv.lock` that CI tests (and downloads Python 3.11 if needed):
+
+```
+uv sync --python 3.11 --extra examples --extra dev
+source .venv/bin/activate
+python -c "import nltk; nltk.download('stopwords')"
+```
+
+The `examples` extra is for the notebooks and `scripts/make_reference.py`, `dev` for the tests. The commands below assume the environment is active; with uv you can instead prefix them with `uv run`.
 
 **Run tests**
 
 ```
 cd tests
-poetry run pytest
+pytest
 ```
 
 **Download embedding**
@@ -33,7 +44,7 @@ The notebooks expect the file at `data/embeddings/` in the repository root, conv
 mkdir -p data/embeddings && cd data/embeddings
 wget https://nlp.stanford.edu/data/glove.840B.300d.zip
 unzip glove.840B.300d.zip
-poetry run python -m gensim.scripts.glove2word2vec -i glove.840B.300d.txt -o glove.840B.300d.w2vformat.txt
+python -m gensim.scripts.glove2word2vec -i glove.840B.300d.txt -o glove.840B.300d.w2vformat.txt
 printf '2196016 300' | dd of=glove.840B.300d.w2vformat.txt bs=1 count=11 conv=notrunc
 ```
 
@@ -45,7 +56,7 @@ If nlp.stanford.edu does not answer, the same zip is at https://downloads.cs.sta
 
 ```
 cd examples
-poetry run jupyter notebook
+jupyter notebook
 ```
 
 Run notebooks from 1_ to 4_ in order.
