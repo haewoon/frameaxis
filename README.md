@@ -34,7 +34,12 @@ mkdir -p data/embeddings && cd data/embeddings
 wget https://nlp.stanford.edu/data/glove.840B.300d.zip
 unzip glove.840B.300d.zip
 poetry run python -m gensim.scripts.glove2word2vec -i glove.840B.300d.txt -o glove.840B.300d.w2vformat.txt
+printf '2196016 300' | dd of=glove.840B.300d.w2vformat.txt bs=1 count=11 conv=notrunc
 ```
+
+The last line fixes the header. glove.840B.300d.txt has 2,196,017 lines but one token twice; gensim 4 keeps 2,196,016 vectors yet writes 2,196,017 as the count, and loading the file then fails with `EOFError: unexpected end of input`.
+If nlp.stanford.edu does not answer, the same zip is at https://downloads.cs.stanford.edu/nlp/data/glove.840B.300d.zip.
+`reference/semeval14/README.md` lists the sha256 of both files.
 
 **Run sample code**
 

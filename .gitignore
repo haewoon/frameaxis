@@ -2,3 +2,6 @@ __pycache__/
 .ipynb_checkpoints/
 .pytest_cache/
 data/
+examples/average/
+examples/second_moment/
+examples/big_table_*.tsv
