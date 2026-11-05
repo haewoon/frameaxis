@@ -1,9 +1,12 @@
 from gensim.models.keyedvectors import KeyedVectors
 from scipy.spatial import distance
-import pkg_resources
+import os
 import numpy as np
 from scipy import stats
 from collections import defaultdict
+
+AXES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "axes")
+
 
 class CoreUtil:
     @staticmethod
@@ -16,7 +19,7 @@ class CoreUtil:
     
     @staticmethod
     def map_axis_to_vec(emb, axis):
-        return (emb.wv[axis[1]] - emb.wv[axis[0]])
+        return (emb[axis[1]] - emb[axis[0]])
 
     @staticmethod
     def load_axes_file(filename):
@@ -30,20 +33,17 @@ class CoreUtil:
     @staticmethod
     def load_conceptnet_antonyms_axes(version = "1.0"):
         if version == "1.0":
-            return CoreUtil.load_axes_file(pkg_resources.resource_filename(
-                'semaxis', "axes/{}".format('732_semaxis_axes.tsv')))            
+            return CoreUtil.load_axes_file(os.path.join(AXES_DIR, "732_semaxis_axes.tsv"))            
         else:
             raise Exception("Unknown version")
 
     @staticmethod
     def load_plutchik_wheel_of_emotions_axes():
-        return CoreUtil.load_axes_file(pkg_resources.resource_filename(
-                'semaxis', "axes/{}".format('plutchik_wheel_of_emotions.tsv')))
+        return CoreUtil.load_axes_file(os.path.join(AXES_DIR, "plutchik_wheel_of_emotions.tsv"))
 
     @staticmethod
     def load_wordnet_antonyms_axes():
-        return CoreUtil.load_axes_file(pkg_resources.resource_filename(
-                'semaxis', "axes/{}".format('wordnet_antonyms.tsv')))
+        return CoreUtil.load_axes_file(os.path.join(AXES_DIR, "wordnet_antonyms.tsv"))
 
     @staticmethod
     def bootstrap_sampling(document, size):
