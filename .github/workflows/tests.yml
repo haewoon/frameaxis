@@ -8,21 +8,17 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.8", "3.9"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          # Only 3.9: current Poetry can no longer create Python 3.8 environments.
+          python-version: "3.9"
       - name: Install Poetry
         run: pipx install poetry
       - name: Install dependencies
         run: |
-          # Current Poetry's virtualenv can no longer seed Python 3.8 envs, so install into the runner's Python.
-          poetry config virtualenvs.create false
+          poetry env use "$(which python)"
           poetry install --with dev
           poetry run python -c "import nltk; nltk.download('stopwords')"
       - name: Run tests

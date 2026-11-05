@@ -7,7 +7,7 @@ https://peerj.com/articles/cs-644/
 
 **Install**
 
-Requires Python 3.8 or 3.9 (the locked TensorFlow 2.6.2 and NumPy 1.19.5 only ship wheels up to 3.9) and [Poetry](https://python-poetry.org/).
+Requires Python 3.9 (the locked TensorFlow 2.6.2 and NumPy 1.19.5 only ship wheels up to 3.9; 3.8 is allowed but not tested in CI, since current Poetry can no longer create 3.8 environments) and [Poetry](https://python-poetry.org/).
 
 ```
 poetry env use python3.9
