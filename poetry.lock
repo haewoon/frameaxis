@@ -2188,7 +2188,6 @@ description = "Inline Matplotlib backend for Jupyter"
 optional = false
 python-versions = ">=3.8"
 groups = ["examples"]
-markers = "python_version == \"3.8\""
 files = [
     {file = "matplotlib_inline-0.1.7-py3-none-any.whl", hash = "sha256:df192d39a4ff8f21b1895d72e6a13f5fcc5099f00fa84384e0ea28c2cc0653ca"},
     {file = "matplotlib_inline-0.1.7.tar.gz", hash = "sha256:8423b23ec666be3d16e16b60bdd8ac4e86e840ebd1dd11a30b9f117f2fa0ab90"},
@@ -2196,25 +2195,6 @@ files = [
 
 [package.dependencies]
 traitlets = "*"
-
-[[package]]
-name = "matplotlib-inline"
-version = "0.2.2"
-description = "Inline Matplotlib backend for Jupyter"
-optional = false
-python-versions = ">=3.9"
-groups = ["examples"]
-markers = "python_version == \"3.9\""
-files = [
-    {file = "matplotlib_inline-0.2.2-py3-none-any.whl", hash = "sha256:3c821cf1c209f59fb2d2d64abbf5b23b67bcb2210d663f9918dd851c6da1fcf6"},
-    {file = "matplotlib_inline-0.2.2.tar.gz", hash = "sha256:72f3fe8fce36b70d4a5b612f899090cd0401deddc4ea90e1572b9f4bfb058c79"},
-]
-
-[package.dependencies]
-traitlets = "*"
-
-[package.extras]
-test = ["flake8", "matplotlib", "nbdime", "nbval", "notebook", "pytest"]
 
 [[package]]
 name = "mistune"
@@ -5020,4 +5000,4 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=4.6)", "pytest-black (
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.8,<3.10"
-content-hash = "25979c730e40df119af5ea63dcb7b9e3a0bd6a7e22d2ed63fe2715eab27e358a"
+content-hash = "2eb5015daca7777ec741c3438fec6307a78ae3f50ee446ca68628da8c0e854ff"

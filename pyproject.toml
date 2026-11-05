@@ -25,6 +25,8 @@ matplotlib = "*"
 notebook = "*"
 # TensorFlow 2.6 pins typing-extensions 3.7, which lacks what mistune 3 (via nbconvert) imports
 mistune = "<3"
+# matplotlib is capped at 3.6 by NumPy 1.19; matplotlib-inline 0.2 needs matplotlib 3.7+
+matplotlib-inline = "<0.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
