@@ -1,31 +1,30 @@
-[tool.poetry]
+[project]
 name = "frameaxis"
 version = "0.1.0"
 description = "FrameAxis: characterizing microframe bias and intensity with word embedding"
-authors = ["Kwak Haewoon <haewoon@acm.org>"]
+authors = [{ name = "Kwak Haewoon", email = "haewoon@acm.org" }]
 readme = "README.md"
-packages = [{ include = "frameaxis" }]
-
-[tool.poetry.dependencies]
 # 3.10 reached end of life in October 2026; gensim 4.4.0 has no wheels past 3.13. CI tests 3.11 and 3.13.
-python = ">=3.11,<3.14"
-numpy = "*"
-scipy = "*"
-scikit-learn = "*"
-gensim = "*"
-nltk = "*"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "numpy",
+    "scipy",
+    "scikit-learn",
+    "gensim",
+    "nltk",
+]
 
-[tool.poetry.group.examples]
-optional = true
-
-[tool.poetry.group.examples.dependencies]
-pandas = "*"
-matplotlib = "*"
-notebook = "*"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "*"
+[project.optional-dependencies]
+# Notebooks in examples/ and scripts/make_reference.py
+examples = [
+    "pandas",
+    "matplotlib",
+    "notebook",
+]
+dev = [
+    "pytest",
+]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
