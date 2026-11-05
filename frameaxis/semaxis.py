@@ -349,64 +349,65 @@ class SemAxis:
             vectorizer = CountVectorizer()
             transformed_data = vectorizer.fit_transform(documents).toarray() #return dense matrix
             frequencies = np.ravel(transformed_data.sum(axis=0))
-            
+            english_stopwords = set(stopwords.words('english')) if filter_stopword else set()
+
             less_freq_idx = np.where(frequencies < min_freq)[0]
             no_emb_idx = [idx for w, idx in vectorizer.vocabulary_.items() if w not in self.embedding]
-            stopwords_idx = [idx for w, idx in vectorizer.vocabulary_.items() if filter_stopword and (w in stopwords.words('english'))]
-            to_filter_out = list(less_freq_idx) + no_emb_idx + stopwords_idx
-            freq_filtered = np.delete(transformed_data, to_filter_out, axis=1) # delete terms appearing less than min_freq
-            
+            stopwords_idx = [idx for w, idx in vectorizer.vocabulary_.items() if w in english_stopwords]
+            to_filter_out = set(less_freq_idx) | set(no_emb_idx) | set(stopwords_idx)
+            freq_filtered = np.delete(transformed_data, sorted(to_filter_out), axis=1) # delete terms appearing less than min_freq
+
             self.doc_idx_to_filter = np.where(np.sum(freq_filtered,axis=1)<1)[0] # delete docs where all terms appear less than min_freq
             # vocabulary_ iterates in first-seen order; sort by column index so rows match freq_filtered columns
-            terms_filtered = [self.embedding[w] for w, idx in sorted(vectorizer.vocabulary_.items(), key=lambda x: x[1]) if idx not in to_filter_out]
+            kept = [w for w, idx in sorted(vectorizer.vocabulary_.items(), key=lambda x: x[1]) if idx not in to_filter_out]
+            self.terms_words = kept
+            terms_filtered = [self.embedding[w] for w in kept]
             if self.axes_mat is None:
                 self.axes_mat = np.array([self.axes[k] for k in sorted(self.axes)])
 
             return terms_filtered, freq_filtered
 
     def _precompute_word_contribution_mat(self, documents, filter_stopword = True, min_freq = 10):
-        # get filtered terms and frequencies for all docs. Terms are filtered out if they
-        # appear less than min_freq times ACROSS ALL DOCS
-        self.terms_filtered, self.doc_freqs =  self._prepare_contribution_mat_and_tf(documents, filter_stopword, min_freq)  
-               
-        import tensorflow as tf        
-        tf.reset_default_graph()
-        with tf.Session() as sess:
-            axes_tfm_nn = tf.nn.l2_normalize(tf.constant(self.axes_mat), axis = 1)
-            term_filtered_tfm_nn = tf.nn.l2_normalize(tf.constant(np.array(self.terms_filtered)), axis = 1)
-            contributions_nn = tf.matmul(axes_tfm_nn, term_filtered_tfm_nn,
-                             adjoint_b = True # transpose second matrix
-                             )
-            self.contributions = contributions_nn.eval()
-    
-    def compute_document_mean_from_contribution_mat(self, doc_idx):
-        import tensorflow as tf        
-        tf.reset_default_graph()
-        with tf.Session() as sess:
-            vectorized_docs_nn = tf.constant(self.doc_freqs, dtype=np.float32)
-            doc_freqs_nn = tf.expand_dims(vectorized_docs_nn[doc_idx,:], axis=1)
+        """Precompute every term's score on every axis for a corpus of documents.
 
-            contributions_nn = tf.constant(self.contributions, dtype=np.float32)
-            # ws: freq * contribution
-            ws = tf.matmul(contributions_nn, doc_freqs_nn)
-            mean = tf.reduce_sum(ws, 1)/tf.reduce_sum(doc_freqs_nn)
-            mean = sess.run(mean)
-        return mean
-    
-    def compute_document_second_moment_from_contribution_mat(self, doc_idx, corpus_mean):
-        import tensorflow as tf        
-        tf.reset_default_graph()
-        with tf.Session() as sess:
-            vectorized_doc = self.doc_freqs[doc_idx,:]
-            doc_freqs_vec = tf.reshape(tf.constant(vectorized_doc, dtype=np.float32), [-1,1])
-            contributions_nn = tf.constant(self.contributions, dtype=np.float32)
+        Terms are dropped here if they appear fewer than ``min_freq`` times across
+        ALL documents. The per-document methods instead apply ``min_freq`` within
+        each document; pass ``min_freq`` (and ``to_filter``) to the
+        ``*_from_contribution_mat`` methods to get the same result.
+        """
+        self.terms_filtered, self.doc_freqs = self._prepare_contribution_mat_and_tf(documents, filter_stopword, min_freq)
+        axes_nn = self.axes_mat / np.linalg.norm(self.axes_mat, axis=1, keepdims=True)
+        terms = np.array(self.terms_filtered, dtype=np.float64).reshape(len(self.terms_filtered), -1)
+        terms_nn = terms / np.linalg.norm(terms, axis=1, keepdims=True)
+        self.contributions = axes_nn @ terms_nn.T  # axes x terms
 
-            mean = tf.constant(corpus_mean, dtype=np.float32)
-            diff_nn = contributions_nn-tf.reshape(mean, [-1,1]) #1621,339
-            diff_numerator = tf.matmul(tf.pow(diff_nn,2), doc_freqs_vec)
-            # moment4 = tf.reduce_sum(tf.multiply(tf.pow(diff, 4), frequencies_vec), 1)/tf.reduce_sum(frequencies_vec)
-            moment2 = tf.reduce_sum(diff_numerator, 1)/tf.reduce_sum(doc_freqs_vec)
-            # kurtosis = moment4 / tf.square(moment2) - 3    
-            moment2 = sess.run(moment2)
+    def _document_freqs(self, doc_idx, min_freq, to_filter):
+        freqs = np.array(self.doc_freqs[doc_idx, :], dtype=np.float64)
+        if min_freq is not None:
+            freqs[freqs < min_freq] = 0.0
+        if to_filter:
+            to_filter = set(to_filter)
+            freqs[[i for i, w in enumerate(self.terms_words) if w in to_filter]] = 0.0
+        return freqs
 
-        return moment2
+    def compute_document_mean_from_contribution_mat(self, doc_idx, min_freq = None, to_filter = set([])):
+        """Frequency-weighted mean score per axis for document ``doc_idx``.
+
+        ``min_freq`` and ``to_filter`` drop terms within this document, as the
+        per-document ``compute_document_mean_with_tf`` does. Returns NaN on every
+        axis when no term is left.
+        """
+        freqs = self._document_freqs(doc_idx, min_freq, to_filter)
+        with np.errstate(invalid='ignore', divide='ignore'):
+            return (self.contributions @ freqs) / freqs.sum()
+
+    def compute_document_second_moment_from_contribution_mat(self, doc_idx, corpus_mean, min_freq = None, to_filter = set([])):
+        """Second moment around ``corpus_mean`` per axis for document ``doc_idx``.
+
+        Same filtering as ``compute_document_mean_from_contribution_mat``; matches
+        ``compute_document_second_moment_with_tf``.
+        """
+        freqs = self._document_freqs(doc_idx, min_freq, to_filter)
+        diff = self.contributions - np.reshape(np.asarray(corpus_mean, dtype=np.float64), (-1, 1))
+        with np.errstate(invalid='ignore', divide='ignore'):
+            return ((diff ** 2) @ freqs) / freqs.sum()

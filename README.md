@@ -55,3 +55,9 @@ Run notebooks from 1_ to 4_ in order.
 Notebook 2 builds the null model: for each aspect and sentiment, `N = 10,000` random subsets of the same size are drawn without replacement from the whole table, with a fixed seed (`SEED = 2021`). Notebook 3 tests each axis two-sided against that null, p = (1 + #{|null - mean(null)| >= |observed - mean(null)|}) / (N + 1), as the PeerJ paper describes, and applies Benjamini-Hochberg correction across all axes within each aspect and sentiment. Axes with q <= 0.05 are reported as significant. The helpers are `random_subset_null`, `two_sided_pvalue` and `fdr_adjust` in `frameaxis/core.py`.
 
 Results produced before this change chose the tail from the sign of the score, used N = 1,000 and no correction (see #13); the `p_2021` column in notebook 3's output keeps that rule for comparison.
+
+**Precomputed contribution matrix**
+
+For large corpora, `_precompute_word_contribution_mat(documents)` scores every term on every axis once, and `compute_document_mean_from_contribution_mat(i)` / `compute_document_second_moment_from_contribution_mat(i, corpus_mean)` then work per document. Its `min_freq` drops terms rare across the whole corpus; to match the per-document methods (`compute_document_mean_with_tf` and friends) precompute with `min_freq=1` and pass `min_freq` and `to_filter` to the per-document calls. It runs in NumPy and no longer needs TensorFlow.
+
+Results computed with this path between its introduction (Dec 2021) and the fixes in #10 and #11 (Nov 2026) are wrong: rows of the contribution matrix were misaligned with the term-frequency columns, and the second moment was not a second moment. Please rerun them.
