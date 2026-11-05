@@ -6,7 +6,6 @@ skipped otherwise, so it does not run in CI. Loading GloVe takes a few minutes.
 import os
 
 import numpy as np
-import pandas as pd
 import pytest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -20,6 +19,9 @@ pytestmark = pytest.mark.skipif(
 
 
 def test_precomputed_path_reproduces_reference_cell_means():
+    # pandas is in the examples group, which CI does not install; skip rather than fail without it.
+    pd = pytest.importorskip("pandas")
+
     from frameaxis.semaxis import CoreUtil, SemAxis
 
     df = pd.read_csv(os.path.join(ROOT, "examples", "restaurant.tsv"), sep="\t").dropna()
