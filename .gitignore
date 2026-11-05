@@ -6,3 +6,4 @@ examples/average/
 examples/second_moment/
 examples/big_table_*.tsv
 .venv/
+examples/review_frames*.pdf

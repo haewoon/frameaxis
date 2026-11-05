@@ -32,4 +32,4 @@ Per aspect × sentiment cell: axes with p_2021 <= 0.05 (sign-chosen tail, N in t
 | service_negative | 430 | 582 | 378 | 142 | 90 | ('best', 'worst') | ('best', 'worst') |
 | service_positive | 290 | 919 | 809 | 56 | 575 | ('hospitable', 'inhospitable') | ('hospitable', 'inhospitable') |
 
-The top-axis columns follow notebook 4: the largest positive `diff_a_b`, which notebook 4 uses for the intensity figure. Before #13 it was taken over all axes; now only over q <= 0.05.
+The top-axis columns follow the first figure in notebook 4 (one axis per aspect): the largest positive `diff_a_b`. Before #13 it was taken over all axes; now only over q <= 0.05. The README figure uses the top two axes per aspect and is not compared here.
