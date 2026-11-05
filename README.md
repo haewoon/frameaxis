@@ -44,3 +44,9 @@ poetry run jupyter notebook
 ```
 
 Run notebooks from 1_ to 4_ in order.
+
+**Significance test**
+
+Notebook 2 builds the null model: for each aspect and sentiment, `N = 10,000` random subsets of the same size are drawn without replacement from the whole table, with a fixed seed (`SEED = 2021`). Notebook 3 tests each axis two-sided against that null, p = (1 + #{|null - mean(null)| >= |observed - mean(null)|}) / (N + 1), as the PeerJ paper describes, and applies Benjamini-Hochberg correction across all axes within each aspect and sentiment. Axes with q <= 0.05 are reported as significant. The helpers are `random_subset_null`, `two_sided_pvalue` and `fdr_adjust` in `frameaxis/core.py`.
+
+Results produced before this change chose the tail from the sign of the score, used N = 1,000 and no correction (see #13); the `p_2021` column in notebook 3's output keeps that rule for comparison.

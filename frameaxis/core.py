@@ -105,6 +105,68 @@ class CoreUtil:
                 except:
                     continue
                 percent_rank = rank/float(len(samples))
-                axis_rank_table.append([pole0, pole1, percent_rank, value, np.mean(sample_values)])
+                # percent_rank is one-sided; the last column is the two-sided p-value
+                p_value = float(two_sided_pvalue(float(value), sample_values))
+                axis_rank_table.append([pole0, pole1, percent_rank, value, np.mean(sample_values), p_value])
 
         return axis_rank_table
+
+def random_subset_null(values, size, n_samples, seed, batch_size=256):
+    """Null distribution of the column means of a random subset of rows.
+
+    Draws ``n_samples`` subsets of ``size`` rows without replacement from
+    ``values`` (rows x axes) and returns their column means as an
+    ``n_samples x axes`` array. This is the null model of the PeerJ paper:
+    samples from the whole corpus with the same size as the target corpus.
+    The same ``seed`` always gives the same samples.
+    """
+    values = np.asarray(values, dtype=np.float64)
+    rng = np.random.default_rng(seed)
+    n_rows = values.shape[0]
+    means = np.empty((n_samples, values.shape[1]))
+    # Draw subsets in batches as 0/1 selection rows, so the means are one matrix product per batch.
+    for start in range(0, n_samples, batch_size):
+        stop = min(start + batch_size, n_samples)
+        select = np.zeros((stop - start, n_rows))
+        for i in range(stop - start):
+            select[i, rng.choice(n_rows, size, replace=False)] = 1.0
+        means[start:stop] = select @ values / size
+    return means
+
+
+def two_sided_pvalue(observed, null_samples):
+    """Two-sided p-value of ``observed`` against bootstrap ``null_samples``.
+
+    Measures how far the observation is from the null mean, in either
+    direction: p = (1 + #{|null - mean(null)| >= |observed - mean(null)|}) / (N + 1).
+    ``observed`` may be a scalar or one value per axis, with ``null_samples``
+    shaped ``N`` or ``N x axes``. The +1 keeps p above zero; with N samples
+    the smallest attainable p is 1 / (N + 1).
+    """
+    null_samples = np.asarray(null_samples, dtype=np.float64)
+    observed = np.asarray(observed, dtype=np.float64)
+    center = null_samples.mean(axis=0)
+    extreme = np.abs(null_samples - center) >= np.abs(observed - center)
+    return (1.0 + extreme.sum(axis=0)) / (null_samples.shape[0] + 1.0)
+
+
+def fdr_adjust(pvalues, method="bh"):
+    """Benjamini-Hochberg ("bh") or Benjamini-Yekutieli ("by") adjusted p-values.
+
+    Returns q-values in the input order; an axis is significant at FDR level
+    alpha when its q-value is <= alpha.
+    """
+    p = np.asarray(pvalues, dtype=np.float64)
+    m = p.size
+    if m == 0:
+        return p.copy()
+    order = np.argsort(p)
+    scale = m / np.arange(1, m + 1)
+    if method == "by":
+        scale = scale * np.sum(1.0 / np.arange(1, m + 1))
+    elif method != "bh":
+        raise ValueError("method must be 'bh' or 'by'")
+    q_sorted = np.minimum.accumulate((p[order] * scale)[::-1])[::-1]
+    q = np.empty(m)
+    q[order] = np.minimum(q_sorted, 1.0)
+    return q
