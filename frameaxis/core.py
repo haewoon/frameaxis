@@ -111,7 +111,7 @@ class CoreUtil:
 
         return axis_rank_table
 
-def random_subset_null(values, size, n_samples, seed):
+def random_subset_null(values, size, n_samples, seed, batch_size=256):
     """Null distribution of the column means of a random subset of rows.
 
     Draws ``n_samples`` subsets of ``size`` rows without replacement from
@@ -122,10 +122,15 @@ def random_subset_null(values, size, n_samples, seed):
     """
     values = np.asarray(values, dtype=np.float64)
     rng = np.random.default_rng(seed)
+    n_rows = values.shape[0]
     means = np.empty((n_samples, values.shape[1]))
-    for i in range(n_samples):
-        idx = rng.choice(values.shape[0], size, replace=False)
-        means[i] = values[idx].mean(axis=0)
+    # Draw subsets in batches as 0/1 selection rows, so the means are one matrix product per batch.
+    for start in range(0, n_samples, batch_size):
+        stop = min(start + batch_size, n_samples)
+        select = np.zeros((stop - start, n_rows))
+        for i in range(stop - start):
+            select[i, rng.choice(n_rows, size, replace=False)] = 1.0
+        means[start:stop] = select @ values / size
     return means
 
 
