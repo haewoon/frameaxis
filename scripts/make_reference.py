@@ -34,7 +34,7 @@ OUT = os.path.join(ROOT, "reference", "semeval14")
 NOTEBOOKS = ["1_Build big table.ipynb", "2_Bootstrapping.ipynb", "3_Significant axes.ipynb"]
 MODES = ["average", "second_moment"]
 ALPHA = 0.05
-PACKAGES = ["numpy", "scipy", "scikit-learn", "gensim", "nltk", "tensorflow", "pandas"]
+PACKAGES = ["numpy", "scipy", "scikit-learn", "gensim", "nltk", "pandas"]
 
 
 def sha256(path, block=1 << 24):
