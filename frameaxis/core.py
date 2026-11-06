@@ -85,15 +85,25 @@ class CoreUtil:
 
     @staticmethod
     def compute_statistical_significance(result, samples):
+        """Compare each axis value in the ``result`` file with the same axis in the ``samples`` files.
+
+        Lines that do not parse, or whose value is NaN (kurtosis is NaN for a
+        document with one distinct term), are skipped in both the result and the
+        samples: two_sided_pvalue raises on NaN, and before #27 a NaN value got
+        the smallest attainable p. ``percent_rank`` is over the sample values kept
+        for that axis.
+        """
         samples_dict = defaultdict(list)
         for sample in samples:
             with open(sample) as fi:
                 for line in fi:
                     pole0, pole1, value = [term.strip() for term in line.split(",")]
                     try:
-                        samples_dict[(pole0, pole1)].append(float(value))
-                    except:
+                        value = float(value)
+                    except ValueError:
                         continue
+                    if not np.isnan(value):
+                        samples_dict[(pole0, pole1)].append(value)
 
         axis_rank_table = []
         with open(result) as fi:
@@ -101,12 +111,15 @@ class CoreUtil:
                 pole0, pole1, value = [term.strip() for term in line.split(",")]
                 sample_values = samples_dict[(pole0, pole1)]
                 try:
-                    rank = sum([x < float(value) for x in sample_values])
-                except:
+                    value = float(value)
+                except ValueError:
                     continue
-                percent_rank = rank/float(len(samples))
+                if np.isnan(value) or not sample_values:
+                    continue
+                rank = sum([x < value for x in sample_values])
+                percent_rank = rank/float(len(sample_values))
                 # percent_rank is one-sided; the last column is the two-sided p-value
-                p_value = float(two_sided_pvalue(float(value), sample_values))
+                p_value = float(two_sided_pvalue(value, sample_values))
                 axis_rank_table.append([pole0, pole1, percent_rank, value, np.mean(sample_values), p_value])
 
         return axis_rank_table
@@ -163,6 +176,9 @@ def fdr_adjust(pvalues, method="bh"):
     alpha when its q-value is <= alpha.
     """
     p = np.asarray(pvalues, dtype=np.float64)
+    if np.isnan(p).any():
+        # np.minimum.accumulate would spread one NaN to every q-value.
+        raise ValueError("pvalues contain NaN")
     m = p.size
     if m == 0:
         return p.copy()
