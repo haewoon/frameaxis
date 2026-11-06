@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from frameaxis.core import fdr_adjust, random_subset_null, two_sided_pvalue
+from frameaxis.core import CoreUtil, fdr_adjust, random_subset_null, two_sided_pvalue
 
 
 def test_two_sided_catches_shift_toward_zero():
@@ -85,3 +85,29 @@ def test_nan_input_raises():
     table[5, 2] = np.nan
     with pytest.raises(ValueError):
         random_subset_null(table, 20, 99, seed=0)
+
+
+def test_fdr_adjust_raises_on_nan():
+    # Unchecked, one NaN p-value made every q-value NaN.
+    with pytest.raises(ValueError):
+        fdr_adjust(np.array([0.01, np.nan, 0.04, 0.5]))
+
+
+def test_legacy_significance_skips_nan(tmp_path):
+    # Kurtosis is NaN for a document with one distinct term; before #27 such a value got p = 1 / (N + 1).
+    rng = np.random.default_rng(6)
+    samples = []
+    for i in range(99):
+        path = tmp_path / "sample_{}.csv".format(i)
+        a = "nan" if i == 0 else str(rng.normal())
+        path.write_text("bad,good,{}\nsad,happy,{}\nold,new,{}\n".format(a, rng.normal(), rng.normal()))
+        samples.append(str(path))
+    result = tmp_path / "result.csv"
+    result.write_text("bad,good,0.0\nsad,happy,nan\nold,new,not-a-number\n")
+    table = CoreUtil.compute_statistical_significance(str(result), samples)
+    assert [row[:2] for row in table] == [["bad", "good"]]
+    pole0, pole1, percent_rank, value, sample_mean, p = table[0]
+    kept = [float(open(s).readline().split(",")[2]) for s in samples[1:]]
+    assert np.isclose(percent_rank, np.mean(np.array(kept) < 0.0))
+    assert np.isclose(sample_mean, np.mean(kept))
+    assert np.isclose(p, two_sided_pvalue(0.0, kept))
