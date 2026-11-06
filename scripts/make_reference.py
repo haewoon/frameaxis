@@ -136,8 +136,11 @@ Other code paths (the precomputed contribution matrix, a faster pipeline) should
 
 - Unit: each sentence is a document; `min_freq = 1`; NLTK English stopwords removed; the aspect word and its
   plural (`aspect`, `aspect + "s"`) removed from each sentence (`to_filter`).
-- Bias: frequency-weighted mean cosine score per axis (`compute_document_mean_with_tf`).
-- Intensity: second moment around the corpus mean (`compute_document_second_moment_with_tf`).
+- Bias: frequency-weighted mean cosine score per axis for each sentence (`compute_document_mean_with_tf`).
+- Intensity: second moment per sentence around the corpus mean, the mean bias over all sentences
+  (`compute_document_second_moment_with_tf`).
+- Cell values: the mean over the sentences of the cell, so every sentence carries the same weight
+  ('Unit of analysis' in the README).
 - Rows: {rows_avg} of 3,713 sentences produced a row in the bias table, {rows_sm} in the intensity table
   (notebook 1 skips a sentence when no word survives filtering).
 - Null: N = {N} random subsets per aspect × sentiment cell, each the size of the cell, drawn without replacement

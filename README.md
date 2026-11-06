@@ -70,6 +70,10 @@ Notebook 2 builds the null model: for each aspect and sentiment, `N = 10,000` ra
 
 Results produced before this change chose the tail from the sign of the score, used N = 1,000 and no correction (see #13); the `p_2021` column in notebook 3's output keeps that rule for comparison.
 
+**Unit of analysis**
+
+The library computes Equations (2) and (3) of the paper over the list of documents it is given: `compute_document_mean_with_tf(docs)` and `compute_document_second_moment_with_tf(docs, corpus_mean)` pool the term frequencies of all of `docs`. The notebooks are written for sentence-level analysis and pass one sentence at a time, so each sentence gets its own microframe bias and intensity. The value for an aspect × sentiment group, and for each null sample, is the mean over its sentences, and the baseline B<sub>f</sub><sup>T</sup> for intensity is the mean bias over all sentences. Every sentence therefore carries the same weight regardless of its length. The paper's results and `reference/semeval14/` were produced this way. To weight by words, as Equation (2) reads for a whole group, pass all of a group's sentences as one list.
+
 **Precomputed contribution matrix**
 
 For large corpora, `_precompute_word_contribution_mat(documents)` scores every term on every axis once, and `compute_document_mean_from_contribution_mat(i)` / `compute_document_second_moment_from_contribution_mat(i, corpus_mean)` then work per document. Its `min_freq` drops terms rare across the whole corpus; to match the per-document methods (`compute_document_mean_with_tf` and friends) precompute with `min_freq=1` and pass `min_freq` and `to_filter` to the per-document calls.
