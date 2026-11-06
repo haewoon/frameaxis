@@ -102,8 +102,9 @@ def changes():
                 cell, len(old), int((df["p"] <= ALPHA).sum()), len(new), len(old - new), len(new - old),
                 top_old, top_new))
         lines.append("")
-    lines += ["The top-axis columns follow notebook 4: the largest positive `diff_a_b`, which notebook 4 "
-              "uses for the intensity figure. Before #13 it was taken over all axes; now only over q <= 0.05.", ""]
+    lines += ["The top-axis columns follow the first figure in notebook 4 (one axis per aspect): the largest "
+              "positive `diff_a_b`. Before #13 it was taken over all axes; now only over q <= 0.05. The README "
+              "figure uses the top two axes per aspect and is not compared here.", ""]
     open(os.path.join(OUT, "CHANGES.md"), "w").write("\n".join(lines))
 
 

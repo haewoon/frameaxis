@@ -5,6 +5,9 @@ https://peerj.com/articles/cs-644/
 
 <img src="https://github.com/haewoon/frameaxis/raw/main/semeval14.png">
 
+The two highest-intensity microframes for each aspect of the SemEval-2014 restaurant reviews (notebook 4, from `reference/semeval14/`), each placed at its microframe bias against the null model, B<sub>f</sub><sup>Pos</sup> − B<sub>f</sub><sup>NULL</sup> for positive and B<sub>f</sub><sup>Neg</sup> − B<sub>f</sub><sup>NULL</sup> for negative reviews; a hollow marker means that bias is not significant (BH q > 0.05).
+Figure 1B of the PeerJ paper carries the same axis labels but plots the difference between positive and negative reviews, B<sub>f</sub><sup>Pos</sup> − B<sub>f</sub><sup>Neg</sup>, which no test covers (#23). The side each review group leans to is the same except for credible – incredible in positive price reviews, whose bias against the null is not significant; the magnitudes differ (cheap – expensive, for example, is 0.015 against the null and 0.049 between the two groups). One microframe also changed with the corrected test in #13: the second one for negative price reviews is now necessary – unnecessary instead of uninspiring – inspiring.
+
 **Install**
 
 Requires Python 3.11 to 3.13 (CI tests both; gensim has no wheels for 3.14 yet). Everything runs in NumPy; TensorFlow is no longer needed, and the `*_with_tf` method names are kept only for compatibility.
