@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from frameaxis.core import fdr_adjust, random_subset_null, two_sided_pvalue
 
@@ -69,3 +70,18 @@ def test_detects_a_real_shift_after_bh():
     null = random_subset_null(table, 150, 9999, seed=0)
     q = fdr_adjust(two_sided_pvalue(observed, null))
     assert np.all(q[:5] <= 0.05)
+
+
+def test_nan_input_raises():
+    # Unchecked, a NaN observation or one NaN row in the table gave p = 1 / (N + 1) on every axis it touched.
+    rng = np.random.default_rng(5)
+    table = rng.normal(size=(100, 3))
+    null = random_subset_null(table, 20, 99, seed=0)
+    with pytest.raises(ValueError):
+        two_sided_pvalue(np.array([np.nan, 0.0, 0.0]), null)
+    null[0, 1] = np.nan
+    with pytest.raises(ValueError):
+        two_sided_pvalue(np.zeros(3), null)
+    table[5, 2] = np.nan
+    with pytest.raises(ValueError):
+        random_subset_null(table, 20, 99, seed=0)
