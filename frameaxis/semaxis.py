@@ -239,7 +239,8 @@ class SemAxis:
 
     def _prepare_contribution_mat_and_tf(self, documents, filter_stopword, min_freq):
             vectorizer = CountVectorizer()
-            transformed_data = vectorizer.fit_transform(documents).toarray() #return dense matrix
+            # Stays sparse: a dense documents x vocabulary matrix grows with both and is mostly zeros.
+            transformed_data = vectorizer.fit_transform(documents).tocsc()
             frequencies = np.ravel(transformed_data.sum(axis=0))
             english_stopwords = set(stopwords.words('english')) if filter_stopword else set()
 
@@ -247,9 +248,10 @@ class SemAxis:
             no_emb_idx = [idx for w, idx in vectorizer.vocabulary_.items() if w not in self.embedding]
             stopwords_idx = [idx for w, idx in vectorizer.vocabulary_.items() if w in english_stopwords]
             to_filter_out = set(less_freq_idx) | set(no_emb_idx) | set(stopwords_idx)
-            freq_filtered = np.delete(transformed_data, sorted(to_filter_out), axis=1) # delete terms appearing less than min_freq
+            keep_cols = np.setdiff1d(np.arange(transformed_data.shape[1]), sorted(to_filter_out))
+            freq_filtered = transformed_data[:, keep_cols].tocsr() # delete terms appearing less than min_freq
 
-            self.doc_idx_to_filter = np.where(np.sum(freq_filtered,axis=1)<1)[0] # delete docs where all terms appear less than min_freq
+            self.doc_idx_to_filter = np.where(np.ravel(freq_filtered.sum(axis=1))<1)[0] # delete docs where all terms appear less than min_freq
             # vocabulary_ iterates in first-seen order; sort by column index so rows match freq_filtered columns
             kept = [w for w, idx in sorted(vectorizer.vocabulary_.items(), key=lambda x: x[1]) if idx not in to_filter_out]
             self.terms_words = kept
@@ -272,7 +274,7 @@ class SemAxis:
         self.contributions = _l2_normalize(self.axes_mat) @ _l2_normalize(terms).T  # axes x terms
 
     def _document_freqs(self, doc_idx, min_freq, to_filter):
-        freqs = np.array(self.doc_freqs[doc_idx, :], dtype=np.float64)
+        freqs = self.doc_freqs[doc_idx].toarray().ravel().astype(np.float64)
         if min_freq is not None:
             freqs[freqs < min_freq] = 0.0
         if to_filter:

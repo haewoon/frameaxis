@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import scipy.sparse as sp
 from gensim.models import KeyedVectors
 
 from frameaxis.semaxis import SemAxis
@@ -47,3 +48,10 @@ def test_corpus_wide_min_freq_is_still_the_default(sa):
     sa._precompute_word_contribution_mat(DOCS, filter_stopword=True, min_freq=2)
     assert "bread" not in sa.terms_words and "soup" in sa.terms_words
     assert sa.contributions.shape == (3, len(sa.terms_words))
+
+
+def test_doc_freqs_stay_sparse(sa):
+    # A dense documents x vocabulary matrix does not fit in memory for a large corpus.
+    sa._precompute_word_contribution_mat(DOCS, filter_stopword=True, min_freq=1)
+    assert sp.issparse(sa.doc_freqs)
+    assert sa.doc_freqs.shape == (len(DOCS), len(sa.terms_words))
