@@ -55,7 +55,7 @@ class CoreUtil:
         
     @staticmethod
     def _moment_dict(data, k, data_mean=None):
-        if not data_mean:
+        if data_mean is None:
             data_mean = CoreUtil._average_dict(data)
         return sum(data[key]*(key-data_mean)**k for key in data)/sum(data.values())
 
