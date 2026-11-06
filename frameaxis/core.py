@@ -121,6 +121,9 @@ def random_subset_null(values, size, n_samples, seed, batch_size=256):
     The same ``seed`` always gives the same samples.
     """
     values = np.asarray(values, dtype=np.float64)
+    if np.isnan(values).any():
+        # One NaN row would make every null mean NaN, and two_sided_pvalue would then flag every axis.
+        raise ValueError("values contain NaN; drop those rows first (notebook 2 uses dropna)")
     rng = np.random.default_rng(seed)
     n_rows = values.shape[0]
     means = np.empty((n_samples, values.shape[1]))
@@ -145,6 +148,9 @@ def two_sided_pvalue(observed, null_samples):
     """
     null_samples = np.asarray(null_samples, dtype=np.float64)
     observed = np.asarray(observed, dtype=np.float64)
+    if np.isnan(observed).any() or np.isnan(null_samples).any():
+        # NaN compares False, so it would count as more extreme than every null sample: p = 1 / (N + 1).
+        raise ValueError("observed or null_samples contain NaN")
     center = null_samples.mean(axis=0)
     extreme = np.abs(null_samples - center) >= np.abs(observed - center)
     return (1.0 + extreme.sum(axis=0)) / (null_samples.shape[0] + 1.0)
