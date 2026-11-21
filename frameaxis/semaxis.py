@@ -2,6 +2,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from collections import defaultdict
 import numpy as np
 from nltk.corpus import stopwords
+import functools
 import math
 import operator
 try:
@@ -15,6 +16,12 @@ def _l2_normalize(x):
     """Row-wise L2 normalisation, as tf.nn.l2_normalize(x, axis=1): x / sqrt(max(sum(x**2), 1e-12))."""
     x = np.asarray(x, dtype=np.float64)
     return x / np.sqrt(np.maximum(np.sum(x * x, axis=1, keepdims=True), 1e-12))
+
+
+@functools.lru_cache(maxsize=None)
+def _english_stopwords():
+    # stopwords.words() reads the list from disk on every call; read it once.
+    return frozenset(stopwords.words('english'))
 
 
 class SemAxis:
@@ -59,7 +66,7 @@ class SemAxis:
         for (term, frequency) in tf:
             if frequency < min_freq:
                 continue
-            if filter_stopword and (term in stopwords.words('english')):
+            if filter_stopword and (term in _english_stopwords()):
                 continue
 
             try:
@@ -89,7 +96,7 @@ class SemAxis:
         for (term, frequency) in tf:
             if frequency < min_freq:
                 continue
-            if filter_stopword and (term in stopwords.words('english')):
+            if filter_stopword and (term in _english_stopwords()):
                 continue
 
             try:
@@ -106,7 +113,7 @@ class SemAxis:
     def _prepare_matrix_computation(self, document, filter_stopword, min_freq, to_filter = ()):
         vectorizer = CountVectorizer()
         transformed_data = vectorizer.fit_transform(document)
-        english_stopwords = set(stopwords.words('english')) if filter_stopword else set()
+        english_stopwords = _english_stopwords() if filter_stopword else frozenset()
 
         terms_filtered = []
         frequencies_filtered = []
@@ -120,10 +127,15 @@ class SemAxis:
                 frequencies_filtered.append(frequencies[w_index])
                 words.append(w)
 
-        if self.axes_mat is None:
-            self.axes_mat = np.array([self.axes[k] for k in sorted(self.axes)])
+        self._set_axes_mat()
 
         return terms_filtered, frequencies_filtered, words
+
+    def _set_axes_mat(self):
+        if self.axes_mat is None:
+            self.axes_mat = np.array([self.axes[k] for k in sorted(self.axes)])
+        if getattr(self, "_axes_unit", None) is None:  # also covers a SemAxis pickled before the cache
+            self._axes_unit = _l2_normalize(self.axes_mat)
 
     def _scores(self, axes_mat, terms_filtered):
         """Cosine score of every kept term on every axis (axes x terms).
@@ -133,7 +145,9 @@ class SemAxis:
         """
         if len(terms_filtered) == 0:
             raise ValueError("no term left in the document after filtering")
-        return _l2_normalize(axes_mat) @ _l2_normalize(np.array(terms_filtered)).T
+        # The full axes matrix is the same for every document, so it is normalised once in _set_axes_mat.
+        axes_unit = self._axes_unit if axes_mat is self.axes_mat else _l2_normalize(axes_mat)
+        return axes_unit @ _l2_normalize(np.array(terms_filtered)).T
 
     def compute_document_mean_kurtosis_with_tf(self, document, filter_stopword = True, min_freq = 10):
         terms_filtered, frequencies_filtered, _ = self._prepare_matrix_computation(document, filter_stopword, min_freq)
@@ -242,7 +256,7 @@ class SemAxis:
             # Stays sparse: a dense documents x vocabulary matrix grows with both and is mostly zeros.
             transformed_data = vectorizer.fit_transform(documents).tocsc()
             frequencies = np.ravel(transformed_data.sum(axis=0))
-            english_stopwords = set(stopwords.words('english')) if filter_stopword else set()
+            english_stopwords = _english_stopwords() if filter_stopword else frozenset()
 
             less_freq_idx = np.where(frequencies < min_freq)[0]
             no_emb_idx = [idx for w, idx in vectorizer.vocabulary_.items() if w not in self.embedding]
@@ -256,8 +270,7 @@ class SemAxis:
             kept = [w for w, idx in sorted(vectorizer.vocabulary_.items(), key=lambda x: x[1]) if idx not in to_filter_out]
             self.terms_words = kept
             terms_filtered = [self.embedding[w] for w in kept]
-            if self.axes_mat is None:
-                self.axes_mat = np.array([self.axes[k] for k in sorted(self.axes)])
+            self._set_axes_mat()
 
             return terms_filtered, freq_filtered
 
@@ -271,7 +284,7 @@ class SemAxis:
         """
         self.terms_filtered, self.doc_freqs = self._prepare_contribution_mat_and_tf(documents, filter_stopword, min_freq)
         terms = np.array(self.terms_filtered, dtype=np.float64).reshape(len(self.terms_filtered), -1)
-        self.contributions = _l2_normalize(self.axes_mat) @ _l2_normalize(terms).T  # axes x terms
+        self.contributions = self._axes_unit @ _l2_normalize(terms).T  # axes x terms
 
     def _document_freqs(self, doc_idx, min_freq, to_filter):
         freqs = self.doc_freqs[doc_idx].toarray().ravel().astype(np.float64)
