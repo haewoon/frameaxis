@@ -55,3 +55,18 @@ def test_doc_freqs_stay_sparse(sa):
     sa._precompute_word_contribution_mat(DOCS, filter_stopword=True, min_freq=1)
     assert sp.issparse(sa.doc_freqs)
     assert sa.doc_freqs.shape == (len(DOCS), len(sa.terms_words))
+
+
+def test_new_axes_are_normalised_again(sa):
+    # #34 cached the normalised axes; resetting axes_mat for new axes must not reuse the old cache.
+    doc = ["warm soup and friendly service"]
+    sa.compute_document_mean_with_tf(doc, min_freq=1)
+    sa.axes = {k: v for k, v in sa.axes.items() if k != ("cold", "hot")}
+    sa.axes_mat = None
+    mean = np.ravel(sa.compute_document_mean_with_tf(doc, min_freq=1)[0])
+    fresh = SemAxis(sa.embedding, axes_str=[("bad", "good"), ("cheap", "expensive")])
+    expected = np.ravel(fresh.compute_document_mean_with_tf(doc, min_freq=1)[0])
+    assert mean.shape == (2,)
+    np.testing.assert_array_equal(mean, expected)
+    sa._precompute_word_contribution_mat(DOCS, filter_stopword=True, min_freq=1)
+    assert sa.contributions.shape[0] == 2

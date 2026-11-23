@@ -134,8 +134,12 @@ class SemAxis:
     def _set_axes_mat(self):
         if self.axes_mat is None:
             self.axes_mat = np.array([self.axes[k] for k in sorted(self.axes)])
-        if getattr(self, "_axes_unit", None) is None:  # also covers a SemAxis pickled before the cache
+        # Normalise again whenever axes_mat is a different array, e.g. after `sa.axes_mat = None` to
+        # pick up new axes; getattr also covers a SemAxis pickled before the cache existed.
+        # Changing axes_mat in place is not detected; assign a new array instead.
+        if getattr(self, "_axes_unit_of", None) is not self.axes_mat:
             self._axes_unit = _l2_normalize(self.axes_mat)
+            self._axes_unit_of = self.axes_mat
 
     def _scores(self, axes_mat, terms_filtered):
         """Cosine score of every kept term on every axis (axes x terms).
@@ -146,7 +150,7 @@ class SemAxis:
         if len(terms_filtered) == 0:
             raise ValueError("no term left in the document after filtering")
         # The full axes matrix is the same for every document, so it is normalised once in _set_axes_mat.
-        axes_unit = self._axes_unit if axes_mat is self.axes_mat else _l2_normalize(axes_mat)
+        axes_unit = self._axes_unit if axes_mat is getattr(self, "_axes_unit_of", None) else _l2_normalize(axes_mat)
         return axes_unit @ _l2_normalize(np.array(terms_filtered)).T
 
     def compute_document_mean_kurtosis_with_tf(self, document, filter_stopword = True, min_freq = 10):
